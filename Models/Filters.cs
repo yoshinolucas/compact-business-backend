@@ -10,5 +10,8 @@ namespace backend_dotnet.Models
         public int[]? status { get; set; }
         public string[]? equipe { get; set; }
         public bool arquivado {get; set;}
+        public int date {get;set;}
+        public string[]? date_range {get;set;}
+        public string? order {get;set;}
     }
 }

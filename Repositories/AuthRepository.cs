@@ -17,7 +17,8 @@ namespace backend_dotnet.Repositories
                 var token = TokenService.GenerateToken(result, 3);
                 return new {
                     token = token,
-                    userId = result.Id
+                    userId = result.Id,
+                    privilegio = result.Privilegio
                 };
             }
             return null;

@@ -18,50 +18,41 @@ namespace backend_dotnet.Controllers
 
         [Authorize]
         [HttpGet]
-        [Route("all")]
-        public async Task<IActionResult> All() {
-            return Ok(await _userRepository.All());
-        }
-
-
-        [Authorize]
-        [HttpGet]
-        [Route("id/{id}")]
-        public async Task<IActionResult> Id(int id) {
-            return Ok(await _userRepository.Get(id));
+        [Route("details/{id}")]
+        public async Task<IActionResult> Details(int id) {
+            return Ok(await _userRepository.GetUserById(id));
         }
 
         [Authorize]
         [HttpPost]
         [Route("create")]
         public async Task<IActionResult> Create(User user) {
-            await _userRepository.Create(user);
-            return Ok();
+            return Ok(await _userRepository.InsertUser(user));
         } 
 
         [Authorize]
         [HttpPost]
-        [Route("update")]
-        public async Task<IActionResult> Update(UpdateUser updateUser) {
-            await _userRepository.Update(updateUser);
+        [Route("edit")]
+        public async Task<IActionResult> Edit(UpdateUser updateUser) {
+            await _userRepository.UpdateUser(updateUser);
             return Ok();
         }
 
         [Authorize]
         [HttpPost]
-        [Route("remove")]
-        public async Task<IActionResult> Remove(RemoveUser removeUser) {
+        [Route("delete")]
+        public async Task<IActionResult> Delete(RemoveUser removeUser) {
             
-            await _userRepository.Remove(removeUser);
+            await _userRepository.DeleteUser(removeUser);
             return Ok();
         }
 
         //Paginação
         [Authorize]
         [HttpPost]
-        [Route("table")]
-        public async Task<IActionResult> GetPage(Pager pager) {
-            return Ok(await _userRepository.GetPage(pager));
+        [Route("pages")]
+        public async Task<IActionResult> GetPages(Pager pager) {
+            return Ok(await _userRepository.GetPages(pager));
         } 
     }
 }

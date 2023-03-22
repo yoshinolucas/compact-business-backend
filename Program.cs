@@ -35,6 +35,9 @@ builder.Services.AddAuthentication(x => {
 
     builder.Services.AddScoped<IUserRepository, UserRepository>();
     builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+    builder.Services.AddScoped<IEnderecoRepository, EnderecoRepository>();
+    builder.Services.AddScoped<IDocumentosRepository, DocumentosRepository>();
+    builder.Services.AddScoped<IAlteracoesRepository, AlteracoesRepository>();
     builder.Services.AddControllers();
 
 var app = builder.Build();
