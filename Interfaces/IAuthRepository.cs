@@ -9,6 +9,5 @@ namespace backend_dotnet.Interfaces
     public interface IAuthRepository
     {
         Task<Object?> Login(LoginUser loginUser);
-        Task<bool> Logout(User user);
     }
 }

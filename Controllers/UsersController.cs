@@ -19,16 +19,14 @@ namespace backend_dotnet.Controllers
         [Authorize]
         [HttpGet]
         [Route("details/{id}")]
-        public async Task<IActionResult> Details(int id) {
-            return Ok(await _userRepository.GetUserById(id));
-        }
+        public async Task<IActionResult> Details(int id) => Ok(await _userRepository.GetUserById(id));
+        
 
         [Authorize]
         [HttpPost]
         [Route("create")]
-        public async Task<IActionResult> Create(User user) {
-            return Ok(await _userRepository.InsertUser(user));
-        } 
+        public async Task<IActionResult> Create(User user) => Ok(await _userRepository.InsertUser(user));
+        
 
         [Authorize]
         [HttpPost]
@@ -51,8 +49,7 @@ namespace backend_dotnet.Controllers
         [Authorize]
         [HttpPost]
         [Route("pages")]
-        public async Task<IActionResult> GetPages(Pager pager) {
-            return Ok(await _userRepository.GetPages(pager));
-        } 
+        public async Task<IActionResult> GetPages(Pager pager) => Ok(await _userRepository.GetPages(pager));
+        
     }
 }

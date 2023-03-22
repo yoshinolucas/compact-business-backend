@@ -5,13 +5,13 @@ using System.Threading.Tasks;
 
 namespace backend_dotnet.Models
 {
-    public class Documentos
+    public class Document
     {
         public int Id {get; set;}
         public string? Rg {get;set;}
         public string? Cpf { get; set; }
         public string? Pis {get;set;}
-        public string? Carteira_trabalho {get;set;}
+        public string? Ctps {get;set;}
         public string? Cnh {get;set;}
     }
 }

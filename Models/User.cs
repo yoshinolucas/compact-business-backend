@@ -16,7 +16,7 @@ namespace backend_dotnet.Models
         public string? Email {get;set;}
         public int Status { get; set; }
         public int Privilegio { get; set; }
-        public string? Equipe { get; set; }
+        public string? Team { get; set; }
         public string? Genero {get;set;}
         public string? Data_nasc { get; set; }
         public string? Salario {get;set;}
@@ -24,11 +24,11 @@ namespace backend_dotnet.Models
         public DateTime Created_at {get;set;}
         public DateTime? Updated_at {get;set;}
 
-        public int? EnderecoId { get; set; }
-        public Endereco? Endereco {get;set;}
+        public int? AddressId { get; set; }
+        public Address? Address {get;set;}
 
-        public int? DocumentoId { get; set; }
-        public Documentos? Documentos {get;set;}
+        public int? DocumentId { get; set; }
+        public Document? Document {get;set;}
 
    
     }

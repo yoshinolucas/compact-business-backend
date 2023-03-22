@@ -3,34 +3,42 @@ using backend_dotnet.Config;
 using Dapper;
 using backend_dotnet.Models;
 using backend_dotnet.Models.Dtos;
+using Microsoft.Data.SqlClient;
 
 namespace backend_dotnet.Repositories
 {
     public class UserRepository : IUserRepository
     {
+        private readonly IConfiguration _cfg;
+        private readonly string cs;
+        public UserRepository(IConfiguration cfg)
+        {
+            _cfg = cfg;
+            cs = _cfg.GetConnectionString("Conn")!;
+        }
         public async Task<ViewUser> GetUserById(int id)
         {
-            await using(var conn = ConfigGlobal.GetConnection()) {
+            await using(var conn = new SqlConnection(cs)) {
                 return await conn.QuerySingleOrDefaultAsync<ViewUser>("SELECT * FROM users WHERE id = @id",new { id = id }); 
             }
         }
 
         public async Task DeleteUser(RemoveUser removeUser)
         {
-            await using(var conn = ConfigGlobal.GetConnection()) {
+            await using(var conn = new SqlConnection(cs)) {
                 var users = await conn.QueryAsync<ViewUser>(@"SELECT
-                enderecoId,documentoId FROM users WHERE id IN @ids", new { ids = removeUser.ids});
-                List<int?> enderecoIds = new List<int?>();
-                List<int?> documentoIds = new List<int?>();
+                addressId,addressId FROM users WHERE id IN @ids", new { ids = removeUser.ids});
+                List<int?> addressesIds = new List<int?>();
+                List<int?> documentsIds = new List<int?>();
                 foreach(var user in users){
-                    enderecoIds.Add(user.EnderecoId);
-                    documentoIds.Add(user.DocumentoId);
+                    if(user.AddressId != null) addressesIds.Add(user.AddressId);
+                    if(user.DocumentId != null)documentsIds.Add(user.DocumentId);
                 }
                 
-                await conn.ExecuteAsync(@"DELETE FROM enderecos 
-                WHERE id IN @ids", new { ids = enderecoIds.ToArray() });
-                await conn.ExecuteAsync(@"DELETE FROM documentos 
-                WHERE id IN @ids", new { ids =  documentoIds.ToArray() });
+                await conn.ExecuteAsync(@"DELETE FROM addresses 
+                WHERE id IN @ids", new { ids = addressesIds.ToArray() });
+                await conn.ExecuteAsync(@"DELETE FROM documents 
+                WHERE id IN @ids", new { ids =  documentsIds.ToArray() });
                 await conn.ExecuteAsync(@"DELETE FROM users 
                 WHERE id IN @ids", new { ids = removeUser.ids });
             }
@@ -38,7 +46,7 @@ namespace backend_dotnet.Repositories
 
         public async Task UpdateUser(UpdateUser updateUser)
         {
-            await using(var conn = ConfigGlobal.GetConnection()) {
+            await using(var conn = new SqlConnection(cs)) {
                 var Allparams = new { 
                     Id = updateUser.ids,
                     Username = updateUser?.user?.Username,
@@ -47,10 +55,10 @@ namespace backend_dotnet.Repositories
                     Email = updateUser?.user?.Email,
                     Status = updateUser?.user?.Status,
                     Privilegio = updateUser?.user?.Privilegio,
-                    Equipe = updateUser?.user?.Equipe,
+                    Team = updateUser?.user?.Team,
                     Arquivado = updateUser?.user?.Arquivado,
-                    EnderecoId = updateUser?.user?.EnderecoId,
-                    DocumentoId = updateUser?.user?.DocumentoId,
+                    AddressId = updateUser?.user?.AddressId,
+                    DocumentId = updateUser?.user?.DocumentId,
                     Genero = updateUser?.user?.Genero,
                     Data_nasc = updateUser?.user?.Data_nasc,
                     Salario = updateUser?.user?.Salario
@@ -63,10 +71,10 @@ namespace backend_dotnet.Repositories
                     email = @Email,
                     status = @Status,
                     privilegio = @Privilegio,
-                    equipe = @Equipe,
+                    team = @Team,
                     updated_at = (SELECT getdate()),
-                    documentoId = @DocumentoId,
-                    enderecoId = @EnderecoId,
+                    documentId = @DocumentId,
+                    addressId = @AddressId,
                     data_nasc = @Data_nasc,
                     genero = @Genero,
                     salario = @Salario
@@ -94,9 +102,9 @@ namespace backend_dotnet.Repositories
 
         public async Task<int> InsertUser(User user)
         {
-            await using var conn = ConfigGlobal.GetConnection(); 
+            await using var conn = new SqlConnection(cs); 
             var newUserId = conn.QuerySingle<int>(@"INSERT INTO users 
-            (username,password,email,nome,sobrenome,status,privilegio,equipe,arquivado,enderecoId,documentoId) 
+            (username,password,email,nome,sobrenome,status,privilegio,team,arquivado,addressId,documentId) 
             OUTPUT INSERTED.[id]
             VALUES (
             @Username,
@@ -106,18 +114,17 @@ namespace backend_dotnet.Repositories
             @Sobrenome,
             @Status,
             @Privilegio,
-            @Equipe,
+            @Team,
             @Arquivado,
-            @EnderecoId,
-            @DocumentoId
+            @AddressId,
+            @DocumentId
             )", user);
             return newUserId;
         }
 
-        public static async Task<User> GetByUsernameAndPassword(String? username, String? password){
-            await using(var conn = ConfigGlobal.GetConnection()) {
-                return await conn.QueryFirstOrDefaultAsync<User>(@"
-                SELECT id, username,privilegio FROM users WHERE username=@username AND password=@password",new { username = username, password=password }); 
+        public async Task<User> GetByUsernameAndPassword(String username, String password){
+            await using(var conn = new SqlConnection(cs)) {
+                return await conn.QueryFirstOrDefaultAsync<User>("SELECT id, username,privilegio FROM users WHERE username=@username AND password=@password",new { username = username, password=password }); 
             }
         }
 
@@ -148,7 +155,7 @@ namespace backend_dotnet.Repositories
             //Processo de filtros de colunas
             if(pager?.filters?.status?.Length > 0) filterQuery += " AND status IN @FilterStatus ";    
 
-            if(pager!.filters.arquivado) filterQuery += " AND arquivado = 0 ";    
+            if(!pager!.filters.arquivado) filterQuery += " AND arquivado = 0 ";    
 
             var prefix = "";
             var prefix2 = "";
@@ -156,7 +163,7 @@ namespace backend_dotnet.Repositories
             var prefix4 = "AND";
             if(pager.filters.status?.Length > 0 
                 && pager.filters.arquivado 
-                    && pager.filters.equipe?.Length > 0  ) prefix4 = " AND equipe IN @FilterEquipe OR ";
+                    && pager.filters.equipe?.Length > 0  ) prefix4 = " AND team IN @FilterEquipe OR ";
             
 
             prefix2 = pager.filters!.arquivado 
@@ -169,7 +176,7 @@ namespace backend_dotnet.Repositories
 
             if(pager.filters.arquivado) {
                 filterQuery += pager.filters.equipe!.Length > 0 ? 
-                $" {prefix4} arquivado = 1 AND equipe IN @FilterEquipe " 
+                $" {prefix4} arquivado = 1 AND team IN @FilterEquipe " 
                 : $" {prefix3} arquivado = 1 ";     
             }
 
@@ -177,7 +184,7 @@ namespace backend_dotnet.Repositories
                 prefix = pager.filters.arquivado 
                 && pager.filters.status.Length > 0 ?
                 "OR" : "AND";
-                filterQuery += $" {prefix} equipe IN @FilterEquipe {prefix2} status IN @FilterStatus ";
+                filterQuery += $" {prefix} team IN @FilterEquipe {prefix2} status IN @FilterStatus ";
             }
 
             //Se não houver filtros de status aplicado
@@ -216,14 +223,14 @@ namespace backend_dotnet.Repositories
                 Max = pager.filters.date_range[1]
             };
 
-            await using(var conn = ConfigGlobal.GetConnection()) {
+            await using(var conn = new SqlConnection(cs)) {
                 
                 var totalRecords = await conn.QuerySingleAsync<int>(numAllRecords);
                 var totalRecordsWithFilters = await conn.QuerySingleAsync<int>(numAllRecordsWithFilters, allParams);
                 var results = await conn.QueryAsync<ViewUser>(query,
                 allParams);
 
-                var equipesOptions = await conn.QueryAsync<EquipeOptions>("SELECT DISTINCT equipe FROM users");
+                var teamOptions = await conn.QueryAsync<TeamOptions>("SELECT DISTINCT team FROM users");
 
                 return new {
 
@@ -233,7 +240,7 @@ namespace backend_dotnet.Repositories
                     totalPagesWithFilters = (int)Math.Ceiling(totalRecordsWithFilters / (double) pager.maxItems),
                     search = pager.search,
                     filters = pager.filters,
-                    equipeOptions = equipesOptions.ToList(),
+                    teamOptions = teamOptions.ToList(),
                     users = results.ToList(),
                     currentPageLength = results.ToList().Count,
                     

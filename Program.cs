@@ -33,11 +33,18 @@ builder.Services.AddAuthentication(x => {
     };
 });
 
+var config = new ConfigurationBuilder()
+.AddJsonFile("appsettings.json")
+.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+.Build();
+
+
+
     builder.Services.AddScoped<IUserRepository, UserRepository>();
     builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-    builder.Services.AddScoped<IEnderecoRepository, EnderecoRepository>();
-    builder.Services.AddScoped<IDocumentosRepository, DocumentosRepository>();
-    builder.Services.AddScoped<IAlteracoesRepository, AlteracoesRepository>();
+    builder.Services.AddScoped<IAddressRepository, AddressRepository>();
+    builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
+    builder.Services.AddScoped<IRecordRepository, RecordRepository>();
     builder.Services.AddControllers();
 
 var app = builder.Build();

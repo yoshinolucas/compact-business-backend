@@ -10,5 +10,6 @@ namespace backend_dotnet.Interfaces
         Task UpdateUser(UpdateUser updateUser);
         Task DeleteUser(RemoveUser removeUser);
         Task<Object?> GetPages(Pager pager);
+        Task<User> GetByUsernameAndPassword(string username, string pass);
     }
 }

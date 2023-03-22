@@ -23,16 +23,6 @@ namespace backend_dotnet.Controllers
             var success = await _authRepository.Login(loginUser);
             if ( success != null ) return Ok(success);
             return NotFound();
-        }
-
-        [HttpPost]
-        [Route("logout")]
-        public async Task<IActionResult> Logout(User user){
-            var success = await _authRepository.Logout(user);
-            if( success ) return Ok(success);
-            return NotFound();
-        }
-
-        
+        } 
     }
 }

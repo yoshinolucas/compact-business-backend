@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 namespace backend_dotnet.Models.Dtos
 {
-    public class EquipeOptions
+    public class TeamOptions
     {
-        public string? equipe {get;set;}
+        public string? Team {get;set;}
     }
 }

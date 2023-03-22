@@ -6,10 +6,11 @@ using backend_dotnet.Models;
 
 namespace backend_dotnet.Interfaces
 {
-    public interface IEnderecoRepository
+    public interface IRecordRepository
     {
-        Task<Endereco> Get(int id);
-        Task<int> Create(Endereco endereco);
-        Task Update(Endereco endereco, int id);
+        
+        Task RegisterRecord(Record rec);
+        Task<Record> GetRecordById(int id);
+        Task<Object?> GetPages(Pager pager);
     }
 }
