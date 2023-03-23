@@ -13,7 +13,7 @@ namespace backend_dotnet.Controllers
     [ApiController]
     public class AddressesController : ControllerBase
     {
-         private readonly IAddressRepository _addressRepository;
+        private readonly IAddressRepository _addressRepository;
 
         public AddressesController(IAddressRepository repo)
         {
@@ -36,8 +36,8 @@ namespace backend_dotnet.Controllers
 
         [Authorize]
         [HttpGet]
-        [Route("delete/{id}")]
-        public async Task<IActionResult> Delete(int id) => Ok(await _addressRepository.GetAddressById(id));
+        [Route("details/{id}")]
+        public async Task<IActionResult> Details(int id) => Ok(await _addressRepository.GetAddressById(id));
         
         
     }

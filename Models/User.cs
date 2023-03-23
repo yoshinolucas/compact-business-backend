@@ -7,20 +7,19 @@ namespace backend_dotnet.Models
     {
         public long Id {get;set;}
 
-        public string? Nome {get;set;}
+        public string? Name {get;set;}
 
-        public string? Sobrenome {get;set;}
+        public string? Lastname {get;set;}
         public string? Username {get;set;}
         public string? Password {get;set;}
-
         public string? Email {get;set;}
         public int Status { get; set; }
-        public int Privilegio { get; set; }
+        public int Role { get; set; }
         public string? Team { get; set; }
-        public string? Genero {get;set;}
-        public string? Data_nasc { get; set; }
-        public string? Salario {get;set;}
-        public int Arquivado {get;set;}
+        public string? Gender {get;set;}
+        public string? Birthday_date { get; set; }
+        public string? Salary {get;set;}
+        public int Archived {get;set;}
         public DateTime Created_at {get;set;}
         public DateTime? Updated_at {get;set;}
 

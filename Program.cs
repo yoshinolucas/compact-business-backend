@@ -2,6 +2,7 @@ using System.Text;
 using backend_dotnet.Config;
 using backend_dotnet.Interfaces;
 using backend_dotnet.Repositories;
+using backend_dotnet.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -45,6 +46,8 @@ var config = new ConfigurationBuilder()
     builder.Services.AddScoped<IAddressRepository, AddressRepository>();
     builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
     builder.Services.AddScoped<IRecordRepository, RecordRepository>();
+    builder.Services.AddScoped<IAccessRepository, AccessRepository>();
+    builder.Services.AddScoped<Hash>();
     builder.Services.AddControllers();
 
 var app = builder.Build();

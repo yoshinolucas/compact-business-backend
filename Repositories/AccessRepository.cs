@@ -5,19 +5,26 @@ using Microsoft.Data.SqlClient;
 
 namespace backend_dotnet.Repositories
 {
-    public class RecordRepository : IRecordRepository
+    public class AccessRepository : IAccessRepository
     {
         private readonly IConfiguration _cfg;
         private readonly string cs;
-        public RecordRepository(IConfiguration cfg)
+        public AccessRepository(IConfiguration cfg)
         {
             _cfg = cfg;
             cs = _cfg.GetConnectionString("Conn")!;
         }
+
+        public async Task FinishAccess(int id)
+        {
+            await using var conn = new SqlConnection(cs);
+            await conn.ExecuteAsync("UPDATE accesses SET logout_at = (getdate()) WHERE id = @Id", new { Id = id });
+        }
+
         public async Task<Object?> GetPages(Pager pager)
         {
             string sql = "";
-            sql = @"SELECT * FROM records ORDER BY id
+            sql = @"SELECT * FROM accesses ORDER BY id
                 OFFSET @offset ROWS FETCH NEXT @maxItems ROWS ONLY";
 
 
@@ -33,7 +40,7 @@ namespace backend_dotnet.Repositories
             await using var conn = new SqlConnection(cs);
                 
             int totalRecords = await conn.QuerySingleAsync<int>(numAllRecords);
-            IEnumerable<Record> records = await conn.QueryAsync<Record>(sql,sqlParams);
+            IEnumerable<Access> accesses = await conn.QueryAsync<Access>(sql,sqlParams);
 
 
             return new {
@@ -42,23 +49,16 @@ namespace backend_dotnet.Repositories
                 totalPages = (int)Math.Ceiling(totalRecords / (double) pager.maxItems),
                 search = pager.search,
                 filters = pager?.filters,
-                records = records.ToList(),
-                currentPageLength = records.ToList().Count,
+                accesses = accesses.ToList(),
+                currentPageLength = accesses.ToList().Count,
                 
             };
         }
 
-        public async Task<Record> GetRecordById(int id)
+        public async Task<int> RegisterAccess(int id)
         {
             await using var conn = new SqlConnection(cs);
-            return conn.QuerySingleOrDefault<Record>("SELECT * FROM records WHERE id = @Id",new { Id = id});
-        }
-
-        public async Task RegisterRecord(Record record)
-        {
-            await using var conn = new SqlConnection(cs);
-            await conn.ExecuteAsync("INSERT INTO records (section,userId,before,after,action) VALUES (@Section, @UserId, @Before, @After, @Action)",
-            record);
+            return conn.QuerySingle<int>("INSERT INTO accesses (userId) OUTPUT INSERTED.[id] VALUES (@UserId)", new { UserId = id});
         }
     }
 }

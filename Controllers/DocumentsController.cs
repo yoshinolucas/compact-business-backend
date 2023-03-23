@@ -7,11 +7,11 @@ namespace backend_dotnet.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DocumentosController : ControllerBase
+    public class DocumentsController : ControllerBase
     {
          private readonly IDocumentRepository _documentRepository;
 
-        public DocumentosController(IDocumentRepository repo)
+        public DocumentsController(IDocumentRepository repo)
         {
             _documentRepository = repo;
         }

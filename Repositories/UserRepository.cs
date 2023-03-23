@@ -4,6 +4,8 @@ using Dapper;
 using backend_dotnet.Models;
 using backend_dotnet.Models.Dtos;
 using Microsoft.Data.SqlClient;
+using System.Security.Cryptography;
+using backend_dotnet.Services;
 
 namespace backend_dotnet.Repositories
 {
@@ -11,10 +13,12 @@ namespace backend_dotnet.Repositories
     {
         private readonly IConfiguration _cfg;
         private readonly string cs;
-        public UserRepository(IConfiguration cfg)
+        private readonly Hash _hash;
+        public UserRepository(IConfiguration cfg, Hash hash)
         {
             _cfg = cfg;
             cs = _cfg.GetConnectionString("Conn")!;
+            _hash = hash;
         }
         public async Task<ViewUser> GetUserById(int id)
         {
@@ -27,7 +31,7 @@ namespace backend_dotnet.Repositories
         {
             await using(var conn = new SqlConnection(cs)) {
                 var users = await conn.QueryAsync<ViewUser>(@"SELECT
-                addressId,addressId FROM users WHERE id IN @ids", new { ids = removeUser.ids});
+                addressId,documentId FROM users WHERE id IN @ids", new { ids = removeUser.ids});
                 List<int?> addressesIds = new List<int?>();
                 List<int?> documentsIds = new List<int?>();
                 foreach(var user in users){
@@ -50,34 +54,35 @@ namespace backend_dotnet.Repositories
                 var Allparams = new { 
                     Id = updateUser.ids,
                     Username = updateUser?.user?.Username,
-                    Nome = updateUser?.user?.Nome,
-                    Sobrenome = updateUser?.user?.Sobrenome,
+                    Name = updateUser?.user?.Name,
+                    Lastname = updateUser?.user?.Lastname,
                     Email = updateUser?.user?.Email,
                     Status = updateUser?.user?.Status,
-                    Privilegio = updateUser?.user?.Privilegio,
+                    Role = updateUser?.user?.Role,
                     Team = updateUser?.user?.Team,
-                    Arquivado = updateUser?.user?.Arquivado,
-                    AddressId = updateUser?.user?.AddressId,
-                    DocumentId = updateUser?.user?.DocumentId,
-                    Genero = updateUser?.user?.Genero,
-                    Data_nasc = updateUser?.user?.Data_nasc,
-                    Salario = updateUser?.user?.Salario
+                    Archived = updateUser?.user?.Archived,
+                    AddressId = updateUser?.user?.AddressId > 0 ? updateUser?.user?.AddressId : null,
+                    DocumentId = updateUser?.user?.DocumentId > 0 ? updateUser?.user?.DocumentId : null,
+                    Gender = updateUser?.user?.Gender != "" ? updateUser?.user?.Gender : null,
+                    Birthday_date = updateUser?.user?.Birthday_date != "" ? updateUser?.user?.Birthday_date : null,
+                    Salary = updateUser?.user?.Salary != "" ? updateUser?.user?.Salary : null
                 };
                 if(updateUser?.columns?.Length == 0) {
                     await conn.ExecuteAsync(@"UPDATE users SET
                     username = @Username,
-                    nome = @Nome,
-                    sobrenome = @Sobrenome,
+                    Name = @Name,
+                    lastname = @Lastname,
                     email = @Email,
                     status = @Status,
-                    privilegio = @Privilegio,
+                    role = @Role,
                     team = @Team,
+                    archived = @Archived,
                     updated_at = (SELECT getdate()),
                     documentId = @DocumentId,
                     addressId = @AddressId,
-                    data_nasc = @Data_nasc,
-                    genero = @Genero,
-                    salario = @Salario
+                    birthday_date = @Birthday_date,
+                    gender = @Gender,
+                    salary = @Salary
                     WHERE id IN @Id",
                     Allparams
                     );
@@ -102,29 +107,31 @@ namespace backend_dotnet.Repositories
 
         public async Task<int> InsertUser(User user)
         {
+            
+            user.Password = _hash.HashPassword(user.Password);
             await using var conn = new SqlConnection(cs); 
             var newUserId = conn.QuerySingle<int>(@"INSERT INTO users 
-            (username,password,email,nome,sobrenome,status,privilegio,team,arquivado,addressId,documentId) 
+            (username,password,email,name,lastname,status,role,team,archived) 
             OUTPUT INSERTED.[id]
             VALUES (
             @Username,
             @Password, 
             @Email, 
-            @Nome,
-            @Sobrenome,
+            @Name,
+            @Lastname,
             @Status,
-            @Privilegio,
+            @Role,
             @Team,
-            @Arquivado,
-            @AddressId,
-            @DocumentId
+            @Archived
             )", user);
             return newUserId;
         }
 
-        public async Task<User> GetByUsernameAndPassword(String username, String password){
+        public async Task<User?> GetByUsernameAndPassword(String username, String password){
             await using(var conn = new SqlConnection(cs)) {
-                return await conn.QueryFirstOrDefaultAsync<User>("SELECT id, username,privilegio FROM users WHERE username=@username AND password=@password",new { username = username, password=password }); 
+                var user = await conn.QueryFirstOrDefaultAsync<User>("SELECT id, username, password,role,status FROM users WHERE username=@username",new { username = username }); 
+                if(_hash.ValidatePass(password, user.Password)) return user;
+                return null;
             }
         }
 
@@ -149,47 +156,47 @@ namespace backend_dotnet.Repositories
             var searchQuery = "";
             var filterQuery = "";
             if(pager.search != ""){
-                searchQuery = " AND (username LIKE @Search OR nome LIKE @Search OR email LIKE @Search) ";
+                searchQuery = " AND (username LIKE @Search OR name LIKE @Search OR email LIKE @Search) ";
             }
             
             //Processo de filtros de colunas
             if(pager?.filters?.status?.Length > 0) filterQuery += " AND status IN @FilterStatus ";    
 
-            if(!pager!.filters.arquivado) filterQuery += " AND arquivado = 0 ";    
+            if(!pager!.filters.archived) filterQuery += " AND archived = 0 ";    
 
             var prefix = "";
             var prefix2 = "";
             var prefix3 = "";
             var prefix4 = "AND";
             if(pager.filters.status?.Length > 0 
-                && pager.filters.arquivado 
-                    && pager.filters.equipe?.Length > 0  ) prefix4 = " AND team IN @FilterEquipe OR ";
+                && pager.filters.archived 
+                    && pager.filters.teams?.Length > 0  ) prefix4 = " AND team IN @FilterTeams OR ";
             
 
-            prefix2 = pager.filters!.arquivado 
-                && pager.filters.equipe!.Length > 0 
+            prefix2 = pager.filters!.archived 
+                && pager.filters.teams!.Length > 0 
                     && pager.filters.status!.Length == 0 ?
                 "OR" : "AND";
 
             prefix3 = pager.filters.status!.Length == 0 
             ? "AND" : "OR";
 
-            if(pager.filters.arquivado) {
-                filterQuery += pager.filters.equipe!.Length > 0 ? 
-                $" {prefix4} arquivado = 1 AND team IN @FilterEquipe " 
-                : $" {prefix3} arquivado = 1 ";     
+            if(pager.filters.archived) {
+                filterQuery += pager.filters.teams!.Length > 0 ? 
+                $" {prefix4} archived = 1 AND team IN @FilterTeams " 
+                : $" {prefix3} archived = 1 ";     
             }
 
-            if(pager.filters.equipe!.Length > 0) {
-                prefix = pager.filters.arquivado 
+            if(pager.filters.teams!.Length > 0) {
+                prefix = pager.filters.archived 
                 && pager.filters.status.Length > 0 ?
                 "OR" : "AND";
-                filterQuery += $" {prefix} team IN @FilterEquipe {prefix2} status IN @FilterStatus ";
+                filterQuery += $" {prefix} team IN @FilterTeams {prefix2} status IN @FilterStatus ";
             }
 
             //Se não houver filtros de status aplicado
             if( pager.filters.status.Length == 0
-                && !pager.filters.arquivado) filterQuery = " AND status IN ('') ";
+                && !pager.filters.archived) filterQuery = " AND status IN ('') ";
             
             //Se houver filtro de datas
             if( pager.filters.date >= 0) filterQuery += " AND DATEDIFF(day,created_at,getdate()) < @FilterDate ";
@@ -217,7 +224,7 @@ namespace backend_dotnet.Repositories
                 maxItems = pager.maxItems,
                 Search = "%" + pager.search + "%",
                 FilterStatus = pager.filters.status,
-                FilterEquipe = pager.filters.equipe,
+                FilterTeams = pager.filters.teams,
                 FilterDate = pager.filters.date,
                 Min = pager.filters.date_range![0],
                 Max = pager.filters.date_range[1]

@@ -23,12 +23,12 @@ namespace backend_dotnet.Repositories
         {
             await using var conn = new SqlConnection(cs);
             var result = await _user.GetByUsernameAndPassword(loginUser.Username!, loginUser.Password!);
-            if( result != null ) {
+            if( result != null && result.Status != 3 ) {
                 var token = TokenService.GenerateToken(result, 3);
                 return new {
                     token = token,
                     userId = result.Id,
-                    privilegio = result.Privilegio
+                    role = result.Role
                 };
             }
             return null;

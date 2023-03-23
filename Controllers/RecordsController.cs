@@ -31,7 +31,7 @@ namespace backend_dotnet.Controllers
         [Authorize]
         [HttpPost]
         [Route("pages")]
-        public async Task<IActionResult> GetPages(Pager pager) => Ok(await _recRepository.GetPages(pager));
+        public async Task<IActionResult> Pages(Pager pager) => Ok(await _recRepository.GetPages(pager));
         
 
         [Authorize]

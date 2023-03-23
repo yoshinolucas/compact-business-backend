@@ -23,23 +23,5 @@ namespace backend_dotnet.Services
             var token = tokenHandler.CreateToken(tokenConfig);
             return tokenHandler.WriteToken(token);          
         }
-
-        // public static string GenerateToken(User user, int hours) {
-        //     var tokenHandler = new JwtSecurityTokenHandler();
-        //     var key = Encoding.ASCII.GetBytes(ConfigGlobal.Secret);
-        //     var tokenDescriptor = new SecurityTokenDescriptor{
-        //         Subject = new ClaimsIdentity(new[] {
-        //             new Claim(ClaimTypes.Name, user.Username)
-        //         }),
-        //         Expires = DateTime.UtcNow.AddHours(hours),
-        //         SigningCredentials = new SigningCredentials(
-        //             new SymmetricSecurityKey(key),
-        //             SecurityAlgorithms.HmacSha256Signature
-        //         )
-
-        //     };
-        //     var token = tokenHandler.CreateToken(tokenDescriptor);
-        //     return tokenHandler.WriteToken(token);
-        // }
     }
 }
