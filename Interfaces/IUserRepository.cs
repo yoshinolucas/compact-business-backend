@@ -8,7 +8,7 @@ namespace backend_dotnet.Interfaces
         Task<ViewUser> GetUserById(int id);
         Task<int> InsertUser(User user);
         Task UpdateUser(UpdateUser updateUser);
-        Task DeleteUser(RemoveUser removeUser);
+        Task DeleteUser(RemoveList removeList);
         Task<Object?> GetPages(Pager pager);
         Task<User> GetByUsernameAndPassword(string username, string pass);
     }

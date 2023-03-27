@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace backend_dotnet.Models
 {
-    public class RemoveUser
+    public class RemoveList
     {
         public int[]? ids {get;set;}
     }

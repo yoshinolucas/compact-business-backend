@@ -7,5 +7,6 @@ namespace backend_dotnet.Interfaces
         Task<Object?> GetPages(Pager pager);
         Task<int> RegisterAccess(int id);
         Task FinishAccess(int id);
+        Task DeleteAccess(RemoveList removeList);
     }
 }

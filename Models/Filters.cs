@@ -13,5 +13,6 @@ namespace backend_dotnet.Models
         public int date {get;set;}
         public string[]? date_range {get;set;}
         public string? order {get;set;}
+        public int? id {get;set;}
     }
 }

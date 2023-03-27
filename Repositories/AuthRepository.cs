@@ -22,13 +22,15 @@ namespace backend_dotnet.Repositories
         public async Task<Object?> Login(LoginUser loginUser)
         {
             await using var conn = new SqlConnection(cs);
-            var result = await _user.GetByUsernameAndPassword(loginUser.Username!, loginUser.Password!);
-            if( result != null && result.Status != 3 ) {
-                var token = TokenService.GenerateToken(result, 3);
+            var user = await _user.GetByUsernameAndPassword(loginUser.Username!, loginUser.Password!);
+            if( user != null && user.Status != 3 ) {
+                var token = TokenService.GenerateToken(user, 3);
                 return new {
                     token = token,
-                    userId = result.Id,
-                    role = result.Role
+                    user = new {
+                        id = user.Id,
+                        role = user.Role,
+                    }
                 };
             }
             return null;

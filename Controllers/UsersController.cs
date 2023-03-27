@@ -39,9 +39,9 @@ namespace backend_dotnet.Controllers
         [Authorize]
         [HttpPost]
         [Route("delete")]
-        public async Task<IActionResult> Delete(RemoveUser removeUser) {
+        public async Task<IActionResult> Delete(RemoveList removeList) {
             
-            await _userRepository.DeleteUser(removeUser);
+            await _userRepository.DeleteUser(removeList);
             return Ok();
         }
 

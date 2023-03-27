@@ -47,6 +47,7 @@ var config = new ConfigurationBuilder()
     builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
     builder.Services.AddScoped<IRecordRepository, RecordRepository>();
     builder.Services.AddScoped<IAccessRepository, AccessRepository>();
+    builder.Services.AddScoped<IProductRepository, ProductRepository>();
     builder.Services.AddScoped<Hash>();
     builder.Services.AddControllers();
 

@@ -27,11 +27,11 @@ namespace backend_dotnet.Repositories
             }
         }
 
-        public async Task DeleteUser(RemoveUser removeUser)
+        public async Task DeleteUser(RemoveList removeList)
         {
             await using(var conn = new SqlConnection(cs)) {
                 var users = await conn.QueryAsync<ViewUser>(@"SELECT
-                addressId,documentId FROM users WHERE id IN @ids", new { ids = removeUser.ids});
+                addressId,documentId FROM users WHERE id IN @ids", new { ids = removeList.ids});
                 List<int?> addressesIds = new List<int?>();
                 List<int?> documentsIds = new List<int?>();
                 foreach(var user in users){
@@ -44,7 +44,7 @@ namespace backend_dotnet.Repositories
                 await conn.ExecuteAsync(@"DELETE FROM documents 
                 WHERE id IN @ids", new { ids =  documentsIds.ToArray() });
                 await conn.ExecuteAsync(@"DELETE FROM users 
-                WHERE id IN @ids", new { ids = removeUser.ids });
+                WHERE id IN @ids", new { ids = removeList.ids });
             }
         }
 

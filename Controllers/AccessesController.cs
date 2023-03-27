@@ -36,6 +36,15 @@ namespace backend_dotnet.Controllers
         [Authorize]
         [HttpPost]
         [Route("pages")]
-        public async Task<IActionResult> Pages(Pager pager) => Ok(await _accessRepository.GetPages(pager));     
+        public async Task<IActionResult> Pages(Pager pager) => Ok(await _accessRepository.GetPages(pager));    
+
+        [Authorize]
+        [HttpPost]
+        [Route("delete")]
+        public async Task<IActionResult> Delete(RemoveList removeList) {
+            await _accessRepository.DeleteAccess(removeList);
+            return Ok(); 
+        }     
+
     }
 }
