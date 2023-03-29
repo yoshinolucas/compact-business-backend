@@ -13,5 +13,6 @@ namespace backend_dotnet.Models
         public string? Pis {get;set;}
         public string? Ctps {get;set;}
         public string? Cnh {get;set;}
+        public int UserId { get; set; }
     }
 }

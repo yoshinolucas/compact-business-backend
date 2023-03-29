@@ -15,11 +15,10 @@ namespace backend_dotnet.Repositories
             _cfg = cfg;
             _cn = _cfg.GetConnectionString("Conn")!;
         }
-        public async Task<bool> Delete(RemoveList removeList)
+        public async Task DeleteProducts(RemoveList removeList)
         {
             await using(var conn = new SqlConnection(_cn)) {
-                await conn.ExecuteAsync("DELETE FROM products WHERE id in @Ids", new { Ids = removeList});
-                return true;
+                await conn.ExecuteAsync("DELETE FROM products WHERE id IN @ids", new { ids = removeList.ids});
             }
         }
 
@@ -34,17 +33,21 @@ namespace backend_dotnet.Repositories
         {
             await using(var conn = new SqlConnection(_cn)) {
                 return conn.QuerySingle<int>(@"INSERT INTO products
-                (measure,description_details,sku,price,brand,description,category,componentId,rawId,obs)
+                (measure,sku,price,brand,description,category)
                 OUTPUT INSERTED.[Id]
                 VALUES (
-                @Measure,@Description_details,@Sku,@Price,@Brand,@Description,@Category,@ComponentId,@RawId,@Obs
+                @Measure,@Sku,@Price,@Brand,@Description,@Category
                 )",product);
             }
         }
 
         public async Task<Object?> GetPages(Pager pager){
+            string sqlWhere = "";
             string sql = "";
-            sql = @"SELECT * FROM products ORDER BY id
+
+
+            if(!String.IsNullOrEmpty(pager.search)) sqlWhere += " AND (description LIKE @Search OR sku LIKE @Search OR category LIKE @Search) ";
+            sql = @$"SELECT * FROM products WHERE 1=1 {sqlWhere} ORDER BY id
             OFFSET @offset ROWS FETCH NEXT @maxItems ROWS ONLY";
 
 
@@ -54,7 +57,8 @@ namespace backend_dotnet.Repositories
 
             var sqlParams = new {
                 offset = offset,
-                maxItems = pager.maxItems
+                maxItems = pager.maxItems,
+                search = "%"+pager.search+"%"
             };
 
             await using var conn = new SqlConnection(_cn);
@@ -69,13 +73,33 @@ namespace backend_dotnet.Repositories
                 search = pager.search,
                 filters = pager?.filters,
                 list = products.ToList(),
-                currentPageLength = products.ToList().Count
+                currentPage = pager.currentPage,
+                currentPageLength = products.ToList().Count,
+                maxItems = pager.maxItems
             };
         }
 
-        public Task Update(UpdateProductDto updateProductDto)
+        public async Task UpdateProduct(UpdateProductDto updateProductDto)
         {
-            throw new NotImplementedException();
+            var sqlParams = new{
+                Ids = updateProductDto.Ids,
+                Description = updateProductDto.Product.Description,
+                Sku = updateProductDto.Product.Sku,
+                Price = updateProductDto.Product.Price,
+                Brand = updateProductDto.Product.Brand,
+                Category = updateProductDto.Product.Category,
+                Measure = updateProductDto.Product.Measure,
+            };
+            await using(var conn = new SqlConnection(_cn)) {
+                await conn.ExecuteAsync(@"UPDATE products SET
+                measure = @Measure,
+                sku=@Sku,
+                price=@Price,
+                brand=@Brand,
+                description=@Description,
+                category=@Category
+                WHERE Id IN @Ids",sqlParams);
+            }
         }
 
         public async Task<int> InsertProductTrade(ProductTrade productTrade)
@@ -115,20 +139,20 @@ namespace backend_dotnet.Repositories
                 
             int totalRecords = await conn.QuerySingleAsync<int>(numAllRecords);
             var product_trades = await conn.QueryAsync<ProductTrade>(sql,sqlParams);
-            var totalAmount = await conn.QuerySingleAsync<int>(@"SELECT 
-            (SELECT SUM(amount) FROM products_trades WHERE productId = @ProductId AND type=1)
+            var totalAmount = await conn.QuerySingleAsync<int?>(@"SELECT 
+            (SELECT COALESCE(SUM(amount),0) FROM products_trades WHERE productId = @ProductId AND type=1)
             -
-            (SELECT SUM(amount) FROM products_trades WHERE productId = @ProductId AND type=2)" ,
+            (SELECT COALESCE(SUM(amount),0) FROM products_trades WHERE productId = @ProductId AND type=2)" ,
             sqlParams);
-            var totalIn = await conn.QuerySingleAsync<int>("SELECT SUM(amount) FROM products_trades WHERE type=1 "+sqlWhere,sqlParams);
-            var totalOut = await conn.QuerySingleAsync<int>("SELECT SUM(amount) FROM products_trades WHERE type=2 "+sqlWhere,sqlParams);
-            var totalPrice = await conn.QuerySingleAsync<decimal>(@"SELECT 
-            (SELECT SUM(price*amount) FROM products_trades WHERE productId = @ProductId AND type=2)
+            var totalIn = await conn.QuerySingleAsync<int?>("SELECT COALESCE(SUM(amount),0) FROM products_trades WHERE type=1 "+sqlWhere,sqlParams);
+            var totalOut = await conn.QuerySingleAsync<int?>("SELECT COALESCE(SUM(amount),0) FROM products_trades WHERE type=2 "+sqlWhere,sqlParams);
+            var totalPrice = await conn.QuerySingleAsync<decimal?>(@"SELECT 
+            (SELECT COALESCE(SUM(price*amount),0) FROM products_trades WHERE productId = @ProductId AND type=2)
             -
-            (SELECT SUM(price*amount) FROM products_trades WHERE productId = @ProductId AND type=1)" ,
+            (SELECT  COALESCE(SUM(price*amount),0) FROM products_trades WHERE productId = @ProductId AND type=1)" ,
             sqlParams);
-            var totalPriceIn = await conn.QuerySingleAsync<decimal>("SELECT SUM(price*amount) FROM products_trades WHERE type=1 "+sqlWhere,sqlParams);
-            var totalPriceOut = await conn.QuerySingleAsync<decimal>("SELECT SUM(price*amount) FROM products_trades WHERE type=2 "+sqlWhere,sqlParams);
+            var totalPriceIn = await conn.QuerySingleAsync<decimal?>("SELECT  COALESCE(SUM(price*amount),0) FROM products_trades WHERE type=1 "+sqlWhere,sqlParams);
+            var totalPriceOut = await conn.QuerySingleAsync<decimal?>("SELECT  COALESCE(SUM(price*amount),0) FROM products_trades WHERE type=2 "+sqlWhere,sqlParams);
             return new {
                 totalRecords = totalRecords,
                 totalPages = (int)Math.Ceiling(totalRecords / (double) pager.maxItems),
@@ -143,6 +167,13 @@ namespace backend_dotnet.Repositories
                 productsTrades = product_trades.ToList(),
                 currentPageLength = product_trades.ToList().Count
             };
+        }
+
+        public async Task DeleteProductsTrades(RemoveList removeList)
+        {
+            await using(var conn = new SqlConnection(_cn)) {
+                await conn.ExecuteAsync("DELETE FROM products_trades WHERE id IN @ids", new { ids = removeList.ids});
+            }
         }
     }
 }

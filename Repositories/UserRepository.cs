@@ -20,31 +20,25 @@ namespace backend_dotnet.Repositories
             cs = _cfg.GetConnectionString("Conn")!;
             _hash = hash;
         }
-        public async Task<ViewUser> GetUserById(int id)
+        public async Task<IEnumerable<ViewUser>> GetUserById(int id)
         {
             await using(var conn = new SqlConnection(cs)) {
-                return await conn.QuerySingleOrDefaultAsync<ViewUser>("SELECT * FROM users WHERE id = @id",new { id = id }); 
+                return await conn.QueryAsync<ViewUser,Address,Document,ViewUser>(sql:@"SELECT * FROM users 
+                LEFT JOIN addresses ON users.id = addresses.userId
+                LEFT JOIN documents ON users.id = documents.userId
+                WHERE users.id = @id",
+                map:(v,a,d)=>{
+                    v.Address = a;
+                    v.Document = d;
+                    return v;
+                }, param:new { id = id }); 
             }
         }
 
         public async Task DeleteUser(RemoveList removeList)
         {
             await using(var conn = new SqlConnection(cs)) {
-                var users = await conn.QueryAsync<ViewUser>(@"SELECT
-                addressId,documentId FROM users WHERE id IN @ids", new { ids = removeList.ids});
-                List<int?> addressesIds = new List<int?>();
-                List<int?> documentsIds = new List<int?>();
-                foreach(var user in users){
-                    if(user.AddressId != null) addressesIds.Add(user.AddressId);
-                    if(user.DocumentId != null)documentsIds.Add(user.DocumentId);
-                }
-                
-                await conn.ExecuteAsync(@"DELETE FROM addresses 
-                WHERE id IN @ids", new { ids = addressesIds.ToArray() });
-                await conn.ExecuteAsync(@"DELETE FROM documents 
-                WHERE id IN @ids", new { ids =  documentsIds.ToArray() });
-                await conn.ExecuteAsync(@"DELETE FROM users 
-                WHERE id IN @ids", new { ids = removeList.ids });
+                await conn.ExecuteAsync(@"DELETE FROM users WHERE id IN @ids", new { ids = removeList.ids });
             }
         }
 
@@ -61,8 +55,6 @@ namespace backend_dotnet.Repositories
                     Role = updateUser?.user?.Role,
                     Team = updateUser?.user?.Team,
                     Archived = updateUser?.user?.Archived,
-                    AddressId = updateUser?.user?.AddressId > 0 ? updateUser?.user?.AddressId : null,
-                    DocumentId = updateUser?.user?.DocumentId > 0 ? updateUser?.user?.DocumentId : null,
                     Gender = updateUser?.user?.Gender != "" ? updateUser?.user?.Gender : null,
                     Birthday_date = updateUser?.user?.Birthday_date != "" ? updateUser?.user?.Birthday_date : null,
                     Salary = updateUser?.user?.Salary != "" ? updateUser?.user?.Salary : null
@@ -78,8 +70,6 @@ namespace backend_dotnet.Repositories
                     team = @Team,
                     archived = @Archived,
                     updated_at = (SELECT getdate()),
-                    documentId = @DocumentId,
-                    addressId = @AddressId,
                     birthday_date = @Birthday_date,
                     gender = @Gender,
                     salary = @Salary
@@ -237,7 +227,7 @@ namespace backend_dotnet.Repositories
                 var results = await conn.QueryAsync<ViewUser>(query,
                 allParams);
 
-                var teamOptions = await conn.QueryAsync<TeamOptions>("SELECT DISTINCT team FROM users");
+                var teamOptions = await conn.QueryAsync<string>("SELECT DISTINCT team FROM users");
 
                 return new {
 

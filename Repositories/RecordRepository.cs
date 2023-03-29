@@ -14,6 +14,15 @@ namespace backend_dotnet.Repositories
             _cfg = cfg;
             cs = _cfg.GetConnectionString("Conn")!;
         }
+
+        public async Task DeleteRecords(RemoveList removeList)
+        {
+            using(var conn = new SqlConnection(cs)) {
+                await conn.ExecuteAsync("DELETE FROM records WHERE id IN @ids",
+                new { removeList.ids });
+            }
+        }
+
         public async Task<Object?> GetPages(Pager pager)
         {
             string sql = "";

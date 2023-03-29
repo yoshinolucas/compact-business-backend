@@ -12,5 +12,6 @@ namespace backend_dotnet.Interfaces
         Task RegisterRecord(Record rec);
         Task<Record> GetRecordById(int id);
         Task<Object?> GetPages(Pager pager);
+        Task DeleteRecords(RemoveList removeList);
     }
 }

@@ -39,7 +39,13 @@ namespace backend_dotnet.Controllers
         [Route("details/{id}")]
         public async Task<IActionResult> Details(int id) => Ok(await _recRepository.GetRecordById(id));
         
-
+        [Authorize]
+        [HttpPost]
+        [Route("delete")]
+        public async Task<IActionResult> Delete(RemoveList removeList) {
+            await _recRepository.DeleteRecords(removeList);
+            return Ok();
+        }
 
     }
 }

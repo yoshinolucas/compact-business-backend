@@ -19,14 +19,14 @@ namespace backend_dotnet.Repositories
             _cfg = cfg;
             cs = _cfg.GetConnectionString("Conn")!;
         }
-        public async Task<int> InsertAddress(Address ddress)
+        public async Task<int> InsertAddress(Address address)
         {
             await using var conn = new SqlConnection(cs); 
             return conn.QuerySingle<int>(@"INSERT INTO addresses 
-            (street,zip_code,state,city,number,district,country) 
+            (street,zip_code,state,city,number,district,country,userId) 
             OUTPUT INSERTED.[id]
             VALUES 
-            (@Street,@Zip_code,@State,@City,@Number,@District,@Country)", ddress);          
+            (@Street,@Zip_code,@State,@City,@Number,@District,@Country,@UserId)", address);          
         }
 
         public async Task<Address> GetAddressById(int id)

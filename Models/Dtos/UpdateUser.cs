@@ -24,7 +24,5 @@ namespace backend_dotnet.Models
         public string? Birthday_date {get;set;}
         public string? Salary {get;set;}
         public string? Gender {get;set;}
-        public int? AddressId {get;set;}
-        public int? DocumentId {get;set;}
     }
 }

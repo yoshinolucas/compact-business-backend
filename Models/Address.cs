@@ -10,5 +10,6 @@ namespace backend_dotnet.Models
         public string? Number {get;set;}
         public string? District { get; set; }
         public string? Country {get;set;}
+        public int UserId { get; set; }
     }
 }

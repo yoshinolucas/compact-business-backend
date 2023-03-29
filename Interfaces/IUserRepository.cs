@@ -5,7 +5,7 @@ namespace backend_dotnet.Interfaces
 {
     public interface IUserRepository
     {
-        Task<ViewUser> GetUserById(int id);
+        Task<IEnumerable<ViewUser>> GetUserById(int id);
         Task<int> InsertUser(User user);
         Task UpdateUser(UpdateUser updateUser);
         Task DeleteUser(RemoveList removeList);

@@ -22,11 +22,7 @@ namespace backend_dotnet.Models
         public int Archived {get;set;}
         public DateTime Created_at {get;set;}
         public DateTime? Updated_at {get;set;}
-
-        public int? AddressId { get; set; }
         public Address? Address {get;set;}
-
-        public int? DocumentId { get; set; }
         public Document? Document {get;set;}
 
    

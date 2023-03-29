@@ -20,7 +20,7 @@ namespace backend_dotnet.Models.Dtos
         public DateTime? Updated_at {get;set;}
         public string? Birthday_date {get;set;}
         public string? Gender {get;set;}
-        public int? AddressId {get;set;}
-        public int? DocumentId {get;set;}
+        public Address Address {get;set;}
+        public Document Document { get; set; }
     }
 }

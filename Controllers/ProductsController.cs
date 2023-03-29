@@ -33,7 +33,7 @@ namespace backend_dotnet.Controllers
         [HttpPost]
         [Route("edit")]
         public async Task<IActionResult> Edit(UpdateProductDto updateProductDto) {
-            await _productRepository.Update(updateProductDto);
+            await _productRepository.UpdateProduct(updateProductDto);
             return Ok();
         } 
 
@@ -47,14 +47,22 @@ namespace backend_dotnet.Controllers
         [HttpPost]
         [Route("delete")]
         public async Task<IActionResult> Delete(RemoveList removeList) {
-            await _productRepository.Delete(removeList);
+            await _productRepository.DeleteProducts(removeList);
+            return Ok();
+        } 
+
+        [Authorize]
+        [HttpPost]
+        [Route("trades/delete")]
+        public async Task<IActionResult> DeleteTrades(RemoveList removeList) {
+            await _productRepository.DeleteProductsTrades(removeList);
             return Ok();
         } 
 
         [Authorize]
         [HttpPost]
         [Route("trades/register")]
-        public async Task<IActionResult> RegisterIn(ProductTrade productTrade) {
+        public async Task<IActionResult> RegisterTrade(ProductTrade productTrade) {
             return Ok(await _productRepository.InsertProductTrade(productTrade));
         } 
 

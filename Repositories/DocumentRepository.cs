@@ -19,10 +19,10 @@ namespace backend_dotnet.Repositories
         {
             await using var conn = new SqlConnection(cs);
             return conn.QuerySingle<int>(@"INSERT INTO documents 
-            (rg,cpf,cnh,pis,ctps) 
+            (rg,cpf,cnh,pis,ctps,userId) 
             OUTPUT INSERTED.[id]
             VALUES 
-            (@Rg,@Cpf,@Cnh,@Pis,@Ctps)", document);
+            (@Rg,@Cpf,@Cnh,@Pis,@Ctps,@UserId)", document);
         }
 
         public async Task<Document> GetDocumentById(int id)
