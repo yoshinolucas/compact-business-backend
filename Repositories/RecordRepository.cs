@@ -30,7 +30,7 @@ namespace backend_dotnet.Repositories
                 OFFSET @offset ROWS FETCH NEXT @maxItems ROWS ONLY";
 
 
-            var numAllRecords = ("SELECT COUNT(0) [Count] From accesses;");
+            var numAllRecords = ("SELECT COUNT(0) [Count] From records;");
 
             int offset = (pager.currentPage - 1) * pager.maxItems;
 
@@ -43,8 +43,6 @@ namespace backend_dotnet.Repositories
                 
             int totalRecords = await conn.QuerySingleAsync<int>(numAllRecords);
             IEnumerable<Record> records = await conn.QueryAsync<Record>(sql,sqlParams);
-
-
             return new {
 
                 totalRecords = totalRecords,
@@ -52,6 +50,8 @@ namespace backend_dotnet.Repositories
                 search = pager.search,
                 filters = pager?.filters,
                 records = records.ToList(),
+                currentPage = pager.currentPage,
+                maxItems = pager.maxItems,
                 currentPageLength = records.ToList().Count,
                 
             };

@@ -66,7 +66,9 @@ namespace backend_dotnet.Repositories
                 search = pager.search,
                 filters = pager?.filters,
                 accesses = accesses.ToList(),
-                currentPageLength = accesses.ToList().Count
+                currentPageLength = accesses.ToList().Count,
+                currentPage = pager.currentPage,
+                maxItems = pager.maxItems
             };
         }
 
